@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Result — CityBank Gateway</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-card: rgba(26, 26, 46, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-input: rgba(255, 255, 255, 0.1);
+      --text-primary: #f0f0f5;
+      --text-secondary: #a0a0b8;
+      --text-muted: #6b6b85;
+      --accent-gradient: linear-gradient(135deg, #6c63ff 0%, #a855f7 50%, #ec4899 100%);
+      --accent-violet: #6c63ff;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 16px 60px;
+    }
+
+    /* ── Animated background ── */
+    .bg-animation {
+      position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.12;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb:nth-child(1) { width: 500px; height: 500px; background: #6c63ff; top: -150px; left: -150px; animation-duration: 22s; }
+    .orb:nth-child(2) { width: 400px; height: 400px; background: #ec4899; top: 40%; right: -100px; animation-duration: 18s; animation-delay: -4s; }
+    .orb:nth-child(3) { width: 350px; height: 350px; background: #a855f7; bottom: -100px; left: 30%; animation-duration: 26s; animation-delay: -8s; }
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    /* ── Header ── */
+    .app-header {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 760px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0 0;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { font-size: 28px; }
+    .logo-text { font-size: 18px; font-weight: 700; }
+    .logo-text span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 14px; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-subtle); border-radius: 20px;
+      font-size: 12px; font-weight: 500; color: var(--text-muted);
+    }
+
+    /* ── Main content ── */
+    .main { position: relative; z-index: 10; width: 100%; max-width: 760px; margin-top: 40px; }
+
+    /* ── Status hero ── */
+    .status-hero {
+      text-align: center;
+      padding: 48px 32px 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(20px);
+      margin-bottom: 24px;
+      animation: heroIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes heroIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .status-icon-wrap {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 44px;
+      position: relative;
+    }
+    .status-icon-wrap.success {
+      background: radial-gradient(circle at 40% 40%, rgba(34,197,94,0.25), rgba(34,197,94,0.05));
+      box-shadow: 0 0 0 2px rgba(34,197,94,0.3), 0 0 40px rgba(34,197,94,0.2);
+      animation: pulse-success 2.4s ease-in-out infinite;
+    }
+    .status-icon-wrap.failure {
+      background: radial-gradient(circle at 40% 40%, rgba(239,68,68,0.25), rgba(239,68,68,0.05));
+      box-shadow: 0 0 0 2px rgba(239,68,68,0.3), 0 0 40px rgba(239,68,68,0.2);
+      animation: pulse-failure 2.4s ease-in-out infinite;
+    }
+    .status-icon-wrap.pending {
+      background: radial-gradient(circle at 40% 40%, rgba(245,158,11,0.25), rgba(245,158,11,0.05));
+      box-shadow: 0 0 0 2px rgba(245,158,11,0.3), 0 0 40px rgba(245,158,11,0.2);
+    }
+    @keyframes pulse-success {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(34,197,94,0.3), 0 0 40px rgba(34,197,94,0.2); }
+      50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0.1), 0 0 60px rgba(34,197,94,0.3); }
+    }
+    @keyframes pulse-failure {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.3), 0 0 40px rgba(239,68,68,0.2); }
+      50%       { box-shadow: 0 0 0 8px rgba(239,68,68,0.1), 0 0 60px rgba(239,68,68,0.3); }
+    }
+
+    .status-title {
+      font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px;
+    }
+    .status-title.success { color: #4ade80; }
+    .status-title.failure { color: #f87171; }
+    .status-title.pending { color: #fbbf24; }
+
+    .status-subtitle {
+      font-size: 15px; color: var(--text-secondary); margin-bottom: 28px;
+    }
+
+    /* Status code badge */
+    .status-code-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+    }
+    .status-code-badge.success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .status-code-badge.failure { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+    .status-code-badge.pending { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+
+    /* ── Payload card ── */
+    .payload-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      margin-bottom: 24px;
+      animation: heroIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+    .payload-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(255,255,255,0.02);
+    }
+    .payload-card-header h3 { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+    .payload-card-header span { font-size: 11px; color: var(--text-muted); }
+
+    .payload-table { width: 100%; border-collapse: collapse; }
+    .payload-table tr:last-child td { border-bottom: none; }
+    .payload-table td {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .payload-table td:first-child {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 38%;
+      white-space: nowrap;
+    }
+    .payload-table td:last-child {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      word-break: break-all;
+    }
+    .payload-table tr:hover td { background: rgba(255,255,255,0.015); }
+
+    /* key highlight */
+    .key-highlight { color: #c4b5fd; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 60px 24px;
+      color: var(--text-muted); font-size: 14px;
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; display: block; }
+
+    /* ── Raw JSON toggle ── */
+    .raw-toggle {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      animation: heroIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+      margin-bottom: 24px;
+    }
+    .raw-toggle-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; cursor: pointer; user-select: none;
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      border-bottom: 1px solid transparent;
+      transition: var(--transition);
+    }
+    .raw-toggle-header:hover { background: rgba(255,255,255,0.02); }
+    .raw-toggle-header.open { border-bottom-color: var(--border-subtle); }
+    .raw-toggle-chevron { transition: transform 0.3s ease; font-size: 10px; }
+    .raw-toggle-chevron.open { transform: rotate(180deg); }
+    .raw-json {
+      display: none; padding: 20px;
+      background: rgba(15,15,26,0.6);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px; line-height: 1.8;
+      color: #86efac;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .raw-json.visible { display: block; }
+
+    /* ── Action buttons ── */
+    .actions {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      animation: heroIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border: none; border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: var(--transition); text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--accent-gradient); color: white;
+      box-shadow: 0 4px 15px rgba(108,99,255,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,99,255,0.4); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .btn-copy {
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.2);
+      color: #4ade80;
+    }
+    .btn-copy:hover { background: rgba(34,197,94,0.15); }
+  </style>
+</head>
+
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-animation">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div class="logo-text"><span>CityBank</span> Payment Tester</div>
+    </div>
+    <div class="header-badge">📬 Gateway Callback</div>
+  </header>
+
+  <!-- Main -->
+  <main class="main" id="main">
+    <!-- Rendered by JS -->
+  </main>
+
+  <script>
+    // ── Parse URL query params ──────────────────────────────────────────────
+    const params = Object.fromEntries(new URLSearchParams(window.location.search));
+    const paramCount = Object.keys(params).length;
+
+    // ── Determine status ────────────────────────────────────────────────────
+    // CityBank gateway likely sends: status, transactionStatus, txnStatus, responseCode, etc.
+    // We check multiple possible field names.
+    function detectStatus(p) {
+      const STATUS_SUCCESS = ['100', '00', '0', 'SUCCESS', 'success', 'APPROVED', 'approved', '1'];
+      const candidates = [
+        p.status, p.Status, p.STATUS,
+        p.transactionStatus, p.txnStatus, p.txStatus,
+        p.responseCode, p.ResponseCode, p.RESPONSECODE,
+        p.resultCode, p.result_code,
+      ];
+      for (const val of candidates) {
+        if (val !== undefined) {
+          if (STATUS_SUCCESS.includes(String(val).toUpperCase()) || STATUS_SUCCESS.includes(String(val))) {
+            return 'success';
+          }
+          if (String(val) === '100') return 'success'; // CityBank gettoken uses 100 = ok
+          return 'failure';
+        }
+      }
+      // If no status field at all and there ARE params, treat as unknown
+      return paramCount > 0 ? 'pending' : 'empty';
+    }
+
+    const statusType = detectStatus(params);
+
+    const STATUS_META = {
+      success: {
+        icon: '✅',
+        title: 'Transaction Successful',
+        subtitle: 'The payment was processed successfully by CityBank Gateway.',
+        badgeLabel: 'SUCCESS',
+        cssClass: 'success',
+      },
+      failure: {
+        icon: '❌',
+        title: 'Transaction Failed',
+        subtitle: 'The payment was declined or encountered an error.',
+        badgeLabel: 'FAILED',
+        cssClass: 'failure',
+      },
+      pending: {
+        icon: '⏳',
+        title: 'Status Unknown',
+        subtitle: 'Response received but could not determine final status. Check payload below.',
+        badgeLabel: 'PENDING',
+        cssClass: 'pending',
+      },
+      empty: {
+        icon: '📭',
+        title: 'No Response Data',
+        subtitle: 'This page receives the transaction result from the CityBank Gateway redirect.',
+        badgeLabel: 'EMPTY',
+        cssClass: 'pending',
+      },
+    };
+
+    const meta = STATUS_META[statusType];
+
+    // ── Build payload table ─────────────────────────────────────────────────
+    const IMPORTANT_KEYS = ['transactionId', 'txnId', 'txnId', 'merchanRefNo', 'merchantRefNo', 'amount', 'txnamount', 'txnAmount'];
+
+    function isImportantKey(k) {
+      return IMPORTANT_KEYS.some(ik => k.toLowerCase().includes(ik.toLowerCase()) || ik.toLowerCase().includes(k.toLowerCase()));
+    }
+
+    function buildTableRows(p) {
+      if (Object.keys(p).length === 0) {
+        return `<tr><td colspan="2" style="padding:40px;text-align:center;color:var(--text-muted)">No parameters received in this callback.</td></tr>`;
+      }
+      return Object.entries(p).map(([k, v]) => {
+        const cls = isImportantKey(k) ? ' key-highlight' : '';
+        return `<tr>
+          <td class="${cls}">${escapeHtml(k)}</td>
+          <td>${escapeHtml(decodeURIComponent(v))}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Get status code for badge ───────────────────────────────────────────
+    function getStatusCode(p) {
+      return p.status || p.Status || p.STATUS || p.responseCode || p.ResponseCode || p.txnStatus || '—';
+    }
+
+    // ── Render ──────────────────────────────────────────────────────────────
+    const main = document.getElementById('main');
+    const rawJson = JSON.stringify(params, null, 2);
+    const now = new Date().toLocaleString('en-US', { hour12: true, dateStyle: 'medium', timeStyle: 'medium' });
+    const statusCode = getStatusCode(params);
+
+    main.innerHTML = `
+      <!-- Status Hero -->
+      <div class="status-hero">
+        <div class="status-icon-wrap ${meta.cssClass}">
+          ${meta.icon}
+        </div>
+        <div class="status-title ${meta.cssClass}">${meta.title}</div>
+        <div class="status-subtitle">${meta.subtitle}</div>
+        <div class="status-code-badge ${meta.cssClass}">
+          Status Code: ${escapeHtml(String(statusCode))}
+        </div>
+      </div>
+
+      <!-- Payload Table -->
+      <div class="payload-card">
+        <div class="payload-card-header">
+          <h3>📦 Response Payload</h3>
+          <span>${paramCount} parameter${paramCount !== 1 ? 's' : ''} · received at ${now}</span>
+        </div>
+        <table class="payload-table">
+          ${buildTableRows(params)}
+        </table>
+      </div>
+
+      <!-- Raw JSON Toggle -->
+      <div class="raw-toggle">
+        <div class="raw-toggle-header" id="rawToggleHeader" onclick="toggleRaw()">
+          <span>🗂️ Raw Response JSON</span>
+          <span class="raw-toggle-chevron" id="rawChevron">▼</span>
+        </div>
+        <pre class="raw-json" id="rawJson">${escapeHtml(rawJson)}</pre>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <a href="/" class="btn btn-primary">← Test Another Payment</a>
+        <button class="btn btn-copy" onclick="copyPayload()">📋 Copy JSON</button>
+        <button class="btn btn-ghost" onclick="window.print()">🖨️ Print</button>
+      </div>
+    `;
+
+    // ── Interactions ────────────────────────────────────────────────────────
+    function toggleRaw() {
+      const json = document.getElementById('rawJson');
+      const header = document.getElementById('rawToggleHeader');
+      const chevron = document.getElementById('rawChevron');
+      json.classList.toggle('visible');
+      header.classList.toggle('open');
+      chevron.classList.toggle('open');
+    }
+
+    function copyPayload() {
+      navigator.clipboard.writeText(rawJson).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        const orig = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>
+

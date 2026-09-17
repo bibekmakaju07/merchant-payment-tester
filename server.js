@@ -55,6 +55,18 @@ app.post('/api/gettoken', async (req, res) => {
   }
 });
 
+// Callback endpoint — CityBank gateway POSTs or GETs the result here
+// Handle POST: convert form body to query string and redirect to GET /callback
+app.post('/callback', express.urlencoded({ extended: true }), (req, res) => {
+  const params = new URLSearchParams(req.body).toString();
+  res.redirect(`/callback?${params}`);
+});
+
+// Handle GET: serve the callback result page (static file)
+app.get('/callback', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'callback.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`\n  🏦 Merchant Payment Tester running at:`);
   console.log(`     http://localhost:${PORT}\n`);
