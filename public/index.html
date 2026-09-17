@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Payment Tester — CityBank Gateway</title>
+  <meta name="description" content="Internal testing tool for CityBank merchant payment gateway integration">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+
+<body>
+
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div class="logo-text"><span>CityBank</span> Payment Tester</div>
+    </div>
+    <div class="header-badge">
+      <div class="dot"></div>
+      Testing Environment
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+
+    <!-- Environment Tabs -->
+    <div class="env-tabs">
+      <button class="env-tab active" data-env="DEV">🛠️ DEV</button>
+      <button class="env-tab" data-env="UAT">🧪 UAT</button>
+      <button class="env-tab" data-env="LOCAL">💻 LOCAL</button>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step1Indicator">
+        <div class="step-number">1</div>
+        <span>Generate Token</span>
+      </div>
+      <div class="step-connector" id="stepConnector"></div>
+      <div class="step" id="step2Indicator">
+        <div class="step-number">2</div>
+        <span>Make Payment</span>
+      </div>
+    </div>
+
+    <!-- Two-Panel Layout -->
+    <div class="panels">
+
+      <!-- PANEL 1: Token Generation -->
+      <div class="panel-token">
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="icon">🔑</span> Merchant Authentication</h2>
+          </div>
+          <div class="card-body">
+
+            <!-- Channel Selector -->
+            <div class="channel-selector">
+              <button type="button" class="channel-btn" data-channel="WEB" id="channelWeb">
+                🌐 WEB
+              </button>
+              <button type="button" class="channel-btn active" data-channel="MOBILE" id="channelMobile">
+                📱 MOBILE
+              </button>
+            </div>
+
+            <form id="tokenForm">
+              <div class="form-group">
+                <label for="loginname">Merchant Username <span class="required">*</span></label>
+                <input type="text" id="loginname" class="form-input" placeholder="e.g. SHARETRIP" required
+                  autocomplete="off">
+              </div>
+
+              <div class="form-group">
+                <label for="login_password">Merchant Password <span class="required">*</span></label>
+                <input type="password" id="login_password" class="form-input" placeholder="Enter merchant password"
+                  required autocomplete="off">
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="tokenBtn">
+                <span id="tokenBtnText">🔐 Generate Token</span>
+              </button>
+            </form>
+
+            <!-- Response Box -->
+            <div class="response-box" id="responseBox">
+              <div class="label">API Response</div>
+              <div class="value" id="responseContent"></div>
+            </div>
+
+            <!-- Token History -->
+            <div class="token-history" id="tokenHistory" style="display:none;">
+              <div class="token-history-title">Recent Tokens</div>
+              <div id="tokenHistoryList"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: Payment Form -->
+      <div class="panel-payment disabled" id="paymentPanel">
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="icon">💳</span> Payment Details</h2>
+          </div>
+          <div class="card-body">
+            <form id="paymentForm" method="POST">
+
+              <div class="form-group">
+                <label for="transactionId">Transaction ID</label>
+                <input type="text" id="transactionId" name="transactionId" class="form-input has-value" readonly
+                  required>
+                <div class="info-tip">
+                  <span class="tip-icon">ℹ️</span> Auto-filled from token generation
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="merchanRefNo">Merchant Ref No <span class="required">*</span></label>
+                  <input type="text" id="merchanRefNo" name="merchanRefNo" class="form-input" value="DEV" required
+                    placeholder="Unique txn identifier">
+                </div>
+                <div class="form-group">
+                  <label for="txnamount">Amount <span class="required">*</span></label>
+                  <input type="text" id="txnamount" name="txnamount" class="form-input" value="23" required
+                    placeholder="e.g. 100">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="servicetype">Service Type <span class="required">*</span></label>
+                  <input type="text" id="servicetype" name="servicetype" class="form-input" value="DARAZ" required
+                    placeholder="e.g. DARAZ">
+                </div>
+                <div class="form-group">
+                  <label for="serviceid">Service ID <span class="required">*</span></label>
+                  <input type="text" id="serviceid" name="serviceid" class="form-input" value="DARAZ" required
+                    placeholder="e.g. DARAZ">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="resendpoint">Response Endpoint (Redirect URL) <span class="required">*</span></label>
+                <input type="text" id="resendpoint" name="resendpoint" class="form-input"
+                  value="https://www.daraz.com.np" required placeholder="https://your-callback.com">
+              </div>
+
+              <button type="submit" class="btn btn-success" id="paymentBtn">
+                📱 Continue to CityBank Payment
+              </button>
+
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

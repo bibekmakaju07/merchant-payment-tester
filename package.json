@@ -1,0 +1,13 @@
+{
+  "name": "merchant-payment-tester",
+  "version": "1.0.0",
+  "description": "CityBank Merchant Payment Gateway Testing Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
