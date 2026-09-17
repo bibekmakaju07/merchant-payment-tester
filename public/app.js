@@ -17,11 +17,15 @@ const envTabs = document.querySelectorAll('.env-tab');
 const paymentForm = document.getElementById('paymentForm');
 
 // ===== ENVIRONMENTS CONFIG =====
-const environmentUrls = {
-    DEV: 'http://edge-payment-gateway.10.13.134.14.nip.io/CityBank/merchant/userlogin',
-    UAT: 'https://k2.citybankplc.com/merchant-gateway/CityBank/merchant/userlogin',
-    LOCAL: 'http://localhost:9083/merchant-gateway/CityBank/merchant/userlogin'
+const CONTEXT_PATH = '/CityBank/merchant';
+
+const baseUrls = {
+    DEV: 'http://edge-payment-gateway.10.13.134.14.nip.io',
+    UAT: 'https://k2.citybankplc.com/merchant-gateway',
+    LOCAL: 'http://localhost:9083/merchant-gateway'
 };
+
+const getPaymentUrl = (env) => `${baseUrls[env] || baseUrls.DEV}${CONTEXT_PATH}/userlogin`;
 
 // ===== STATE =====
 let selectedChannel = 'MOBILE';
@@ -29,7 +33,7 @@ let selectedEnv = 'DEV';
 let tokens = [];
 
 // Initialize
-paymentForm.action = environmentUrls[selectedEnv];
+paymentForm.action = getPaymentUrl(selectedEnv);
 
 // ===== ENVIRONMENT SELECTOR =====
 envTabs.forEach(tab => {
@@ -39,7 +43,7 @@ envTabs.forEach(tab => {
         selectedEnv = tab.dataset.env;
 
         // Update payment form action
-        paymentForm.action = environmentUrls[selectedEnv];
+        paymentForm.action = getPaymentUrl(selectedEnv);
 
         showToast(`Environment switched to ${selectedEnv}`, 'info');
     });

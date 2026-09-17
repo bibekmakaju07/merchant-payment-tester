@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -7,10 +8,12 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const CONTEXT_PATH = '/CityBank/merchant';
+
 const environments = {
-  DEV: 'http://edge-payment-gateway.10.13.134.14.nip.io/CityBank/merchant',
-  UAT: 'https://k2.citybankplc.com/merchant-gateway/CityBank/merchant',
-  LOCAL: 'http://localhost:9083/merchant-gateway/CityBank/merchant'
+  DEV: 'https://citybank.f1soft.com.np/gateway-dev',
+  UAT: 'https://k2prod.citybankplc.com/merchant-gateway',
+  LOCAL: 'http://localhost:9083/merchant-gateway'
 };
 
 // Proxy endpoint for gettoken API (avoids CORS issues)
@@ -25,7 +28,7 @@ app.post('/api/gettoken', async (req, res) => {
   }
 
   const baseUrl = environments[env] || environments.DEV;
-  const tokenUrl = `${baseUrl}/gettoken`;
+  const tokenUrl = `${baseUrl}${CONTEXT_PATH}/gettoken`;
 
   const headers = {
     'x-request-channel': channel || 'MOBILE',
@@ -55,14 +58,46 @@ app.post('/api/gettoken', async (req, res) => {
   }
 });
 
-// Callback endpoint — CityBank gateway POSTs or GETs the result here
-// Handle POST: convert form body to query string and redirect to GET /callback
+// =============================================================================
+// MERCHANT CALLBACK — Citytouch POSTs payment result here after user pays
+//
+// Flow: User pays via Citytouch mobile/web
+//       → Citytouch browser-POSTs form data to this endpoint (the merchant's resendpoint)
+//       → We read the POST body and inject it into callback.html as a JS variable
+//       → User sees the payment result on our merchant page
+//
+// POST body from CityBank gateway:
+//   txnStatus=1 (1=success, 0=failed)
+//   merchanRefNo=DEV
+//   transactionId=NOV24-39220b63-5409-445d-8b51-016693cfb635
+//   txnamount=23
+// =============================================================================
 app.post('/callback', express.urlencoded({ extended: true }), (req, res) => {
-  const params = new URLSearchParams(req.body).toString();
-  res.redirect(`/callback?${params}`);
+  const payload = req.body;                  // parsed form data from Citytouch
+  const receivedAt = new Date().toISOString();
+
+  console.log(`\n[CALLBACK] Payment result received at ${receivedAt}`);
+  console.log('[CALLBACK] Payload:', payload);
+
+  // Read the static callback.html and inject the payload as a JS variable
+  // so the page can render immediately without a redirect
+  const htmlPath = path.join(__dirname, 'public', 'callback.html');
+  let html = fs.readFileSync(htmlPath, 'utf8');
+
+  // Inject the server-received payload just before </head>
+  const injection = `
+  <script>
+    // Payload injected server-side from CityBank POST callback
+    window.__CALLBACK_PAYLOAD__ = ${JSON.stringify(payload)};
+    window.__CALLBACK_RECEIVED_AT__ = ${JSON.stringify(receivedAt)};
+    window.__CALLBACK_SOURCE__ = 'POST';
+  </script>`;
+
+  html = html.replace('</head>', injection + '\n</head>');
+  res.send(html);
 });
 
-// Handle GET: serve the callback result page (static file)
+// GET /callback — for direct browser testing via URL query params
 app.get('/callback', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'callback.html'));
 });
