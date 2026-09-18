@@ -56,6 +56,7 @@ let tokens = [];
 const loginnameInput = document.getElementById('loginname');
 const loginPasswordInput = document.getElementById('login_password');
 const merchanRefNoInput = document.getElementById('merchanRefNo');
+const resendpointInput = document.getElementById('resendpoint');
 
 function applyPreset(env) {
     const preset = envPresets[env];
@@ -69,6 +70,16 @@ function applyPreset(env) {
                 b.classList.toggle('active', b.dataset.channel === preset.channel);
             });
         }
+    }
+}
+
+// Auto-configure callback URL: use current origin if hosted (e.g. Render), or default to Render URL
+if (resendpointInput) {
+    const currentOrigin = window.location.origin;
+    if (currentOrigin && currentOrigin !== 'null' && !currentOrigin.startsWith('file:') && !currentOrigin.includes('localhost')) {
+        resendpointInput.value = `${currentOrigin}/callback`;
+    } else {
+        resendpointInput.value = 'https://merchant-payment-tester.onrender.com/callback';
     }
 }
 
@@ -247,5 +258,18 @@ document.addEventListener('keydown', (e) => {
         } else {
             document.getElementById('paymentForm').requestSubmit();
         }
+    }
+});
+
+// If resendpoint is left empty (non-obligatory), disable it on submit so empty field isn't posted
+paymentForm.addEventListener('submit', () => {
+    if (resendpointInput && !resendpointInput.value.trim()) {
+        resendpointInput.disabled = true;
+    }
+});
+
+window.addEventListener('pageshow', () => {
+    if (resendpointInput) {
+        resendpointInput.disabled = false;
     }
 });
