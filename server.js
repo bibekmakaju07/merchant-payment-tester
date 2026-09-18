@@ -11,8 +11,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const CONTEXT_PATH = '/CityBank/merchant';
 
 const environments = {
-  DEV: 'https://citybank.f1soft.com.np/gateway-dev',
-  UAT: 'https://k2prod.citybankplc.com/merchant-gateway',
+  DEV: 'http://edge-payment-gateway.10.13.134.14.nip.io',
+  UAT: 'https://k2.citybankplc.com/merchant-gateway',
   LOCAL: 'http://localhost:9083/merchant-gateway'
 };
 

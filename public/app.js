@@ -25,15 +25,56 @@ const baseUrls = {
     LOCAL: 'http://localhost:9083/merchant-gateway'
 };
 
+const envPresets = {
+    UAT: {
+        loginname: 'SHARETRIP',
+        login_password: 'SHTrip#12345678',
+        channel: 'WEB',
+        merchanRefNo: 'UAT'
+    },
+    DEV: {
+        loginname: 'SHARETRIP',
+        login_password: '',
+        channel: 'MOBILE',
+        merchanRefNo: 'DEV'
+    },
+    LOCAL: {
+        loginname: 'daraz',
+        login_password: 'Abc@1234',
+        channel: 'WEB',
+        merchanRefNo: 'LOCAL'
+    }
+};
+
 const getPaymentUrl = (env) => `${baseUrls[env] || baseUrls.DEV}${CONTEXT_PATH}/userlogin`;
 
 // ===== STATE =====
-let selectedChannel = 'MOBILE';
-let selectedEnv = 'DEV';
+let selectedChannel = 'WEB';
+let selectedEnv = 'UAT';
 let tokens = [];
+
+const loginnameInput = document.getElementById('loginname');
+const loginPasswordInput = document.getElementById('login_password');
+const merchanRefNoInput = document.getElementById('merchanRefNo');
+
+function applyPreset(env) {
+    const preset = envPresets[env];
+    if (preset) {
+        if (loginnameInput && preset.loginname) loginnameInput.value = preset.loginname;
+        if (loginPasswordInput && preset.login_password) loginPasswordInput.value = preset.login_password;
+        if (merchanRefNoInput && preset.merchanRefNo) merchanRefNoInput.value = preset.merchanRefNo;
+        if (preset.channel) {
+            selectedChannel = preset.channel;
+            channelBtns.forEach(b => {
+                b.classList.toggle('active', b.dataset.channel === preset.channel);
+            });
+        }
+    }
+}
 
 // Initialize
 paymentForm.action = getPaymentUrl(selectedEnv);
+applyPreset(selectedEnv);
 
 // ===== ENVIRONMENT SELECTOR =====
 envTabs.forEach(tab => {
@@ -44,6 +85,9 @@ envTabs.forEach(tab => {
 
         // Update payment form action
         paymentForm.action = getPaymentUrl(selectedEnv);
+
+        // Apply environment credentials and channel preset
+        applyPreset(selectedEnv);
 
         showToast(`Environment switched to ${selectedEnv}`, 'info');
     });
