@@ -260,16 +260,3 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
-
-// If resendpoint is left empty (non-obligatory), disable it on submit so empty field isn't posted
-paymentForm.addEventListener('submit', () => {
-    if (resendpointInput && !resendpointInput.value.trim()) {
-        resendpointInput.disabled = true;
-    }
-});
-
-window.addEventListener('pageshow', () => {
-    if (resendpointInput) {
-        resendpointInput.disabled = false;
-    }
-});
